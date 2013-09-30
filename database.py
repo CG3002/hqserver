@@ -50,10 +50,14 @@ class Outlet(db.Model):
 
 class RetailLink(db.Model):
 	__tablename__='RetailLinks'
-	barcode=db.Column(db.Integer, db.ForeignKey('Product.barcode'), primary_key=True)
-	outlet_id=db.Column(db.Integer, db.ForeignKey('Outlet.outlet_id'), primary_key=True)
+	barcode=db.Column(db.Integer, db.ForeignKey('Products.barcode'), primary_key=True)
+	outlet_id=db.Column(db.Integer, db.ForeignKey('Outlets.outlet_id'), primary_key=True)
 	product_max_stock=db.Column(db.Integer)
 	product_min_stock=db.Column(db.Integer)
+	outlet=db.relationship('Outlet',
+        backref=db.backref('productsInOutlet', lazy='dynamic'))
+	product=db.relationship('Product',
+		backref=db.backref('outletsStockedby', lazy='dynamic'))
 
 	def __init__(self, barcode, outlet_id, product_max_stock, product_min_stock):
 		self.barcode=barcode
@@ -67,8 +71,8 @@ class RetailLink(db.Model):
 class Transaction(db.Model):
 	__tablename__='Transactions'
 	transaction_id=db.Column(db.Integer, primary_key=True)
-	outlet_id=db.Column(db.Integer, db.ForeignKey('Outlet.id'), primary_key=True)
-	barcode=db.Column(db.Integer, db.ForeignKey('Product.id'), primary_key=True)
+	outlet_id=db.Column(db.Integer, db.ForeignKey('Outlets.outlet_id'), primary_key=True)
+	barcode=db.Column(db.Integer, db.ForeignKey('Products.barcode'), primary_key=True)
 	cashier_id=db.Column(db.Integer)
 	product_quantity=db.Column(db.Integer)
 	timestamp=db.Column(db.Integer)
