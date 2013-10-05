@@ -2,11 +2,15 @@
 This file contains the Database ORMs of the hqserver
 '''
 from flask import Flask
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.sqlalchemy import SQLAlchemy, before_models_committed
 import time
+from flask.ext.superadmin import Admin, model
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/test.db'
+# app.config['SQLALCHEMY_ECHO'] = True
+app.secret_key = os.urandom(24)
 db = SQLAlchemy(app)
 
 class Product(db.Model):
@@ -19,7 +23,7 @@ class Product(db.Model):
 	product_MRP=db.Column(db.Integer)
 	product_bundle_unit=db.Column(db.Integer)
 
-	def __init__(self, barcode, product_name=None, description=None, category=None, manufacturer_name=None, product_MRP=None, product_bundle_unit=0):
+	def __init__(self, barcode=None, product_name=None, description=None, category=None, manufacturer_name=None, product_MRP=None, product_bundle_unit=0):
 		self.barcode=barcode
 		self.product_name=product_name
 		self.description=description
@@ -33,13 +37,12 @@ class Product(db.Model):
 
 class Outlet(db.Model):
 	__tablename__='Outlets'
-	outlet_id=db.Column(db.Integer, primary_key=True)
+	outlet_id=db.Column(db.Integer, primary_key=True, autoincrement=True)
 	outlet_name=db.Column(db.String(120))
 	manager_name=db.Column(db.String(120))
 	location=db.Column(db.String(120))
 
-	def __init__(self, outlet_id, outlet_name=None, manager_name=None, location=None):
-		self.outlet_id=outlet_id
+	def __init__(self, outlet_name=None, manager_name=None, location=None):
 		self.outlet_name=outlet_name
 		self.manager_name=manager_name
 		self.location=location
@@ -59,7 +62,7 @@ class RetailLink(db.Model):
 	product=db.relationship('Product',
 		backref=db.backref('outletsStockedby', lazy='dynamic'))
 
-	def __init__(self, barcode, outlet_id, product_max_stock, product_min_stock):
+	def __init__(self, barcode=10043940, outlet_id=1, product_max_stock=0, product_min_stock=0):
 		self.barcode=barcode
 		self.outlet_id=outlet_id
 		self.product_max_stock=product_max_stock
@@ -78,11 +81,13 @@ class Transaction(db.Model):
 	timestamp=db.Column(db.Integer)
 	outlet=db.relationship('Outlet',
         backref=db.backref('transactions', lazy='dynamic'))
+	product=db.relationship('Product',
+		backref=db.backref('transactions', lazy='dynamic'))
 
-	def __init__(self, transaction_id, outlet_id, barcode, cashier_id=None, product_quantity=None, timestamp=None):
+	def __init__(self, transaction_id=None, barcode=10043940, outlet_id=1, cashier_id=None, product_quantity=None, timestamp=None):
 		self.transaction_id=transaction_id
-		self.outlet_id=outlet_id
 		self.barcode=barcode
+		self.outlet_id=outlet_id
 		self.cashier_id=cashier_id
 		self.product_quantity=product_quantity
 		if timestamp is None:
@@ -90,3 +95,8 @@ class Transaction(db.Model):
 
 	def __repr__(self):
 		return '<Transaction ID: %r, Barcode: %r, Outlet ID: %r>' % (self.transaction_id, self.barcode, self.outlet_id)
+
+def generate_primary_key(sender, changes):
+	print 'TTTTTTTTTTTTTTTTTTT'
+
+before_models_committed.connect(generate_primary_key, sender=app)
