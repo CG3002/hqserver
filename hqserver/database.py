@@ -1,13 +1,13 @@
 '''
 This file contains the Database ORMs of the hqserver
 '''
-from flask import Flask
+from hqserver import app
 from flask.ext.sqlalchemy import SQLAlchemy, before_models_committed
 import time
 from flask.ext.superadmin import Admin, model
 import os
+import views
 
-app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/test.db'
 # app.config['SQLALCHEMY_ECHO'] = True
 app.secret_key = os.urandom(24)
@@ -35,17 +35,32 @@ class Product(db.Model):
 	def __repr__(self):
 		return '<Product Barcode: %r>' % self.barcode
 
+	@property
+	def serialize(self):
+		return {
+		'barcode' : self.barcode,
+		'product_name' : self.product_name,
+		'description' : self.description,
+		'category' : self.category,
+		'manufacturer_name' : self.manufacturer_name,
+		'product_MRP' : self.product_MRP,
+		'product_bundle_unit' : self.product_bundle_unit
+		}
+
 class Outlet(db.Model):
 	__tablename__='Outlets'
 	outlet_id=db.Column(db.Integer, primary_key=True, autoincrement=True)
 	outlet_name=db.Column(db.String(120))
 	manager_name=db.Column(db.String(120))
 	location=db.Column(db.String(120))
+	outlet_server_ip=db.Column(db.String(15), unique=True)
 
-	def __init__(self, outlet_name=None, manager_name=None, location=None):
+	def __init__(self, outlet_id=None, outlet_name=None, manager_name=None, location=None, outlet_server_ip="127.0.0.1"):
+		self.outlet_id=outlet_id
 		self.outlet_name=outlet_name
 		self.manager_name=manager_name
 		self.location=location
+		self.outlet_server_ip=outlet_server_ip
 
 	def __repr__(self):
 		return '<Outlet ID: %r>' % self.outlet_id
@@ -62,7 +77,7 @@ class RetailLink(db.Model):
 	product=db.relationship('Product',
 		backref=db.backref('outletsStockedby', lazy='dynamic'))
 
-	def __init__(self, barcode=10043940, outlet_id=1, product_max_stock=0, product_min_stock=0):
+	def __init__(self, barcode=None, outlet_id=1, product_max_stock=0, product_min_stock=0):
 		self.barcode=barcode
 		self.outlet_id=outlet_id
 		self.product_max_stock=product_max_stock
@@ -96,7 +111,9 @@ class Transaction(db.Model):
 	def __repr__(self):
 		return '<Transaction ID: %r, Barcode: %r, Outlet ID: %r>' % (self.transaction_id, self.barcode, self.outlet_id)
 
-def generate_primary_key(sender, changes):
-	print 'TTTTTTTTTTTTTTTTTTT'
+def outlet_db_sync(sender, changes):
+	for model, change in changes:
+		if isinstance(model, RetailLink):
+			views.outlet_sync(model.barcode, change, model.outlet_id)
 
-before_models_committed.connect(generate_primary_key, sender=app)
+before_models_committed.connect(outlet_db_sync, sender=app)

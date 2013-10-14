@@ -1,6 +1,6 @@
+from hqserver import app
 from flask.ext.superadmin import Admin, model
-from database import app, db, Product, RetailLink, Outlet, Transaction
-from views import *
+from hqserver.database import db, Product, RetailLink, Outlet, Transaction
 
 if __name__ == '__main__':
     # Create admin
