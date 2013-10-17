@@ -2,11 +2,16 @@
 This file contains the Model Views for Flask admin
 '''
 from flask.ext.admin.contrib import sqla
+import database
+from flask.ext.admin.contrib.sqla.filters import *
 
 class ProductAdmin(sqla.ModelView):
 	column_display_pk = True
+	column_filters = ('barcode', )
+	column_searchable_list = ('product_name', database.Product.product_name)
 	form_columns = ['barcode', 'product_name', 'description', 'category', 
 					'manufacturer_name', 'product_MRP', 'product_bundle_unit']
+
 
 class OutletAdmin(sqla.ModelView):
 	column_display_pk = True
@@ -14,7 +19,8 @@ class OutletAdmin(sqla.ModelView):
 
 class RetailLinkAdmin(sqla.ModelView):
 	column_display_pk = True
-	form_columns = ['outlet', 'product', 'product_max_stock', 'product_min_stock']
+	can_edit = False
+	form_columns = ['outlet', 'product']
 
 
 

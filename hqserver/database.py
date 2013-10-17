@@ -19,7 +19,7 @@ class Product(db.Model):
 	description=db.Column(db.String(120))
 	category=db.Column(db.String(32))
 	manufacturer_name=db.Column(db.String(32))
-	product_MRP=db.Column(db.Integer)
+	product_MRP=db.Column(db.Float)
 	product_bundle_unit=db.Column(db.Integer)
 
 	def __init__(self, **kwargs):
@@ -34,7 +34,6 @@ class Product(db.Model):
 	def __repr__(self):
 		return '<Product Barcode: %r>' % self.barcode
 
-	@property
 	def serialize(self):
 		return {
 		'barcode' : self.barcode,
@@ -109,7 +108,8 @@ class Transaction(db.Model):
 def outlet_db_sync(sender, changes):
 	for model, change in changes:
 		if isinstance(model, RetailLink):
-			views.outlet_sync(model.product, change, model.outlet)
+			if change != "update":
+				views.outlet_sync(model.product, change, model.outlet)
 		elif isinstance(model, Product):
 			outlets_with_product=RetailLink.query.filter_by(barcode=model.barcode).all()
 			for outlet in outlets_with_product:
