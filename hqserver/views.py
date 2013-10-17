@@ -6,16 +6,20 @@ import database
 def index():
 	return '<a href="/admin/">Click me to get to Admin!</a>'
 
-def outlet_sync(product_barcode, db_action, outlet_id):
-	product = database.Product.query.get(product_barcode)
-	url = "http://" + database.Outlet.query.get(outlet_id).outlet_server_ip + "/sync/"
-	data = json.dumps(product.serialize)
+def outlet_sync(product_obj, db_action, outlet_obj):
+	# print database.Outlet.query.get(outlet_id).outlet_server_ip
+	url = (str(outlet_obj.outlet_server_ip)) + '/sync/'
+	print url
+	data = json.dumps(product_obj.serialize)
+	headers = {'content-type': 'application/json'}
 	print data
 	print db_action
 	if db_action=="insert":
-		requests.post(url, data)
+		resp=requests.post(url, data=data, headers=headers)
+		print resp.text
 	elif db_action=="update":
-		requests.put(url, data)
+		resp=requests.put(url, data=data, headers=headers)
+		print resp.text
 	elif db_action=="delete":
-		requests.delete(url, data)
-
+		resp=requests.delete(url, data=data, headers=headers)
+		print resp.text
