@@ -3,12 +3,15 @@ import requests
 from flask import request, make_response, jsonify, json
 import simplejson
 import database
+import csv
 @app.route('/')
 def index():
 	return '<a href="/admin/">Click me to get to Admin!</a>'
 
-def outlet_sync(product_obj, db_action, outlet_obj):
+def outlet_sync(product_barcode, db_action, outlet_id):
 	# print database.Outlet.query.get(outlet_id).outlet_server_ip
+	product_obj=database.Product.query.get(product_barcode)
+	outlet_obj=database.Outlet.query.get(outlet_id)
 	url = (str(outlet_obj.outlet_server_ip)) + 'sync/'
 	print url
 	data = simplejson.dumps(product_obj.serialize(), use_decimal=True)
@@ -25,6 +28,13 @@ def outlet_sync(product_obj, db_action, outlet_obj):
 		resp=requests.delete(url, data=data, headers=headers)
 		print resp.text
 
+@app.route('/restock', methods=['POST',])
+def retail_server_restock():
+	if request.method=="POST":
+		return make_response(jsonify({'error' : 'False'}), 200)
+	else:
+		return make_response(jsonify({'error' : 'True'}), 403)
+
 @app.route('/sync/', methods=['PUT',])
 def stock_level_sync():
 	if request.method=="PUT":
@@ -35,7 +45,7 @@ def stock_level_sync():
 		min_stock=data.get('min_stock')
 		outlet_ip=data.get('outlet_url')
 		print outlet_ip
-		outlet=database.Outlet.query.filter_by(outlet_server_ip=outlet_ip).first()
+		outlet=database.Outlet.query.filter(database.Outlet.outlet_server_ip.contains(outlet_ip)).first()
 		if outlet is not None:
 			retail_link=database.RetailLink.query.filter_by(barcode=barcode, outlet_id=outlet.outlet_id).first()
 			if retail_link is not None:
@@ -47,3 +57,27 @@ def stock_level_sync():
 				return make_response(jsonify({'error': 'True'}), 412)	
 		else:
 			return make_response(jsonify({'error': 'True'}), 403)
+
+@app.route('/transactions/sync/', methods=['POST',])
+def hq_transaction_log():
+	if request.method=="POST":
+		data=request.get_json()
+		outlet_ip=data.get('outlet_url')
+		outlet=database.Outlet.query.filter(database.Outlet.outlet_server_ip.contains(outlet_ip)).first()
+		if outlet is not None:
+			try:
+				with open('outlet_id'+str(outlet.outlet_id)+'.csv', 'rb+') as csvfile:
+					has_header = csv.Sniffer().sniff(csvfile.read())
+			except IOError:
+				has_header = False
+			with open('outlet_id'+str(outlet.outlet_id)+'.csv', 'ab+') as csvfile:
+				dict_writer=csv.DictWriter(csvfile, delimiter='|', fieldnames=[u'barcode', u'quantity', u'timestamp'], extrasaction='ignore')
+				if has_header == False:
+					dict_writer.writeheader()
+				dict_writer.writerows(data.get('history'))
+			print has_header
+			return make_response(jsonify({'error': 'False'}), 200)
+		else:
+			return make_response(jsonify({'error': 'True'}), 403)	
+	else:
+		return make_response(jsonify({'error': 'True'}), 403)
