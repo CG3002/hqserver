@@ -1,7 +1,7 @@
 from hqserver import app
-from hqserver.database import db, Product, RetailLink, Outlet
+from hqserver.database import db, Product, RetailLink, Outlet, TransactionSync
 from flask.ext.admin import Admin
-from hqserver.model_views import ProductAdmin, OutletAdmin, RetailLinkAdmin
+from hqserver.model_views import ProductAdmin, OutletAdmin, RetailLinkAdmin, TransactionHistory
 
 admin = Admin(app, name="HQ Server")
 
@@ -9,6 +9,7 @@ admin = Admin(app, name="HQ Server")
 admin.add_view(ProductAdmin(Product, db.session))
 admin.add_view(RetailLinkAdmin(RetailLink, db.session))
 admin.add_view(OutletAdmin(Outlet, db.session))
+admin.add_view(TransactionHistory(TransactionSync, db.session))
 # admin.add_view(sqlamodel.ModelView(Post, session=db.session))
 
 # Create DB
