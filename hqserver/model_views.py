@@ -20,6 +20,7 @@ class OutletAdmin(sqla.ModelView):
 class RetailLinkAdmin(sqla.ModelView):
 	column_display_pk = True
 	can_edit = False
+	column_filters = ('barcode', 'outlet_id')
 	form_columns = ['outlet', 'product']
 
 

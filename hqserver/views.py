@@ -9,24 +9,24 @@ def index():
 	return '<a href="/admin/">Click me to get to Admin!</a>'
 
 def outlet_sync(product_barcode, db_action, outlet_id):
-	# print database.Outlet.query.get(outlet_id).outlet_server_ip
-	product_obj=database.Product.query.get(product_barcode)
+	print database.Outlet.query.get(outlet_id).outlet_server_ip
+	payload = {}
+	if db_action!="delete":
+		product_obj=database.Product.query.get(product_barcode)
+		data = simplejson.dumps(product_obj.serialize(), use_decimal=True)
+	else:
+		payload['barcode'] = product_barcode
+		data = simplejson.dumps(payload)
 	outlet_obj=database.Outlet.query.get(outlet_id)
 	url = (str(outlet_obj.outlet_server_ip)) + 'sync/'
-	print url
-	data = simplejson.dumps(product_obj.serialize(), use_decimal=True)
 	headers = {'content-type': 'application/json'}
-	print data
-	print db_action
 	if db_action=="insert":
 		resp=requests.post(url, data=data, headers=headers)
-		print resp.text
 	elif db_action=="update":
 		resp=requests.put(url, data=data, headers=headers)
-		print resp.text
 	elif db_action=="delete":
 		resp=requests.delete(url, data=data, headers=headers)
-		print resp.text
+	print resp.text
 
 @app.route('/restock', methods=['POST',])
 def retail_server_restock():
@@ -39,12 +39,10 @@ def retail_server_restock():
 def stock_level_sync():
 	if request.method=="PUT":
 		data=request.get_json()
-		print data
 		barcode=data.get('barcode')
 		max_stock=data.get('max_stock')
 		min_stock=data.get('min_stock')
 		outlet_ip=data.get('outlet_url')
-		print outlet_ip
 		outlet=database.Outlet.query.filter(database.Outlet.outlet_server_ip.contains(outlet_ip)).first()
 		if outlet is not None:
 			retail_link=database.RetailLink.query.filter_by(barcode=barcode, outlet_id=outlet.outlet_id).first()
@@ -65,19 +63,34 @@ def hq_transaction_log():
 		outlet_ip=data.get('outlet_url')
 		outlet=database.Outlet.query.filter(database.Outlet.outlet_server_ip.contains(outlet_ip)).first()
 		if outlet is not None:
-			try:
-				with open('outlet_id'+str(outlet.outlet_id)+'.csv', 'rb+') as csvfile:
-					has_header = csv.Sniffer().sniff(csvfile.read())
-			except IOError:
-				has_header = False
-			with open('outlet_id'+str(outlet.outlet_id)+'.csv', 'ab+') as csvfile:
-				dict_writer=csv.DictWriter(csvfile, delimiter='|', fieldnames=[u'barcode', u'quantity', u'timestamp'], extrasaction='ignore')
-				if has_header == False:
-					dict_writer.writeheader()
-				dict_writer.writerows(data.get('history'))
-			print has_header
-			return make_response(jsonify({'error': 'False'}), 200)
+			outlet_id = outlet.outlet_id
+			products = data.get('history')
+			for product in products:
+				barcode=product.get('barcode')
+				quantity=product.get('quantity')
+				timestamp=product.get('timestamp')
+				total_revenue=product.get('total_revenue')
+				new_history = database.TransactionSync(barcode=barcode, outlet_id=outlet_id, quantity_sold=quantity,\
+														timestamp=timestamp, total_revenue=total_revenue)
+				database.db.session.add(new_history)
+				database.db.session.commit()
+			return make_response(jsonify({'error' : 'False'}), 200)
 		else:
-			return make_response(jsonify({'error': 'True'}), 403)	
-	else:
-		return make_response(jsonify({'error': 'True'}), 403)
+			return make_response(jsonify({'error': 'True'}), 403)
+	# 	if outlet is not None:
+	# 		try:
+	# 			with open('outlet_id'+str(outlet.outlet_id)+'.csv', 'rb+') as csvfile:
+	# 				has_header = csv.Sniffer().sniff(csvfile.read())
+	# 		except IOError:
+	# 			has_header = False
+	# 		with open('outlet_id'+str(outlet.outlet_id)+'.csv', 'ab+') as csvfile:
+	# 			dict_writer=csv.DictWriter(csvfile, delimiter='|', fieldnames=[u'barcode', u'quantity', u'timestamp', u'total_revenue'], extrasaction='ignore')
+	# 			if has_header == False:
+	# 				dict_writer.writeheader()
+	# 			dict_writer.writerows(data.get('history'))
+	# 		print has_header
+	# 		return make_response(jsonify({'error': 'False'}), 200)
+	# 	else:
+	# 		return make_response(jsonify({'error': 'True'}), 403)	
+	# else:
+	# 	return make_response(jsonify({'error': 'True'}), 403)

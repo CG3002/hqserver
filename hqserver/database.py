@@ -62,8 +62,8 @@ class Outlet(db.Model):
 
 class RetailLink(db.Model):
 	__tablename__='RetailLinks'
-	barcode=db.Column(db.Integer, db.ForeignKey('Products.barcode'), primary_key=True)
-	outlet_id=db.Column(db.Integer, db.ForeignKey('Outlets.outlet_id'), primary_key=True)
+	barcode=db.Column(db.Integer, db.ForeignKey('Products.barcode', ondelete='SET NULL'), primary_key=True)
+	outlet_id=db.Column(db.Integer, db.ForeignKey('Outlets.outlet_id', ondelete='SET NULL'), primary_key=True)
 	product_max_stock=db.Column(db.Integer)
 	product_min_stock=db.Column(db.Integer)
 	outlet=db.relationship('Outlet',
@@ -73,27 +73,52 @@ class RetailLink(db.Model):
 
 	def __init__(self, **kwargs):
 		self.barcode=kwargs.get('barcode')
-		self.outlet_id=kwargs.get('outlet_id', 1)
-		self.product_max_stock=kwargs.get('max_stock', 0)
-		self.product_min_stock=kwargs.get('min_stock', 0)
+		self.outlet_id=kwargs.get('outlet_id')
+		self.product_max_stock=kwargs.get('max_stock', 500)
+		self.product_min_stock=kwargs.get('min_stock', 40)
 
 	def __repr__(self):
 		return '<RetailLink Barcode: %r, Outlet_ID: %r>' % (self.barcode, self.outlet_id)
+
+class TransactionSync(db.Model):
+	__tablename__= 'Retail Transaction Summary'
+	barcode=db.Column(db.Integer, db.ForeignKey('Products.barcode', ondelete='SET NULL'), primary_key=True)
+	outlet_id=db.Column(db.Integer, db.ForeignKey('Outlets.outlet_id', ondelete='SET NULL'), primary_key=True)
+	timestamp=db.Column(db.Integer, primary_key=True)
+	quantity_sold=db.Column(db.Integer)
+	total_revenue=db.Column(db.Float)
+
+	def __init__(self, **kwargs):
+		self.barcode=kwargs.get('barcode')
+		self.outlet_id=kwargs.get('outlet_id')
+		self.timestamp=kwargs.get('timestamp')
+		self.quantity_sold=kwargs.get('quantity_sold', 0)
+		self.total_revenue=kwargs.get('total_revenue', 0)
+
+class User(db.Model):
+	__tablename__='Trolley Users'
+	email=db.Column(db.String(120), primary_key=True)
+	password=db.Column(db.String(160), unique=True)
+	name=db.Column(db.String(120))
+	
+
 
 
 def outlet_db_sync(sender, changes):
 	for model, change in changes:
 		if isinstance(model, RetailLink):
-			if change == "insert" or change == "delete":
-				if model.product is None and model.outlet is None:
-					views.outlet_sync(model.barcode, change, model.outlet_id)
-				elif model.barcode is None and model.outlet_id is None:
-					views.outlet_sync(model.product.barcode, change, model.outlet.outlet_id)
-			else:
-				pass
+			if model.product is not None and model.outlet is not None:
+				views.outlet_sync(model.product.barcode, change, model.outlet.outlet_id)
+			elif model.barcode is not None and model.outlet_id is not None:
+				views.outlet_sync(model.barcode, change, model.outlet_id)
 		elif isinstance(model, Product):
 			outlets_with_product=RetailLink.query.filter_by(barcode=model.barcode).all()
 			for outlet in outlets_with_product:
-				views.outlet_sync(model.product, change, outlet.outlet)
+				if change != "delete":
+					views.outlet_sync(model.barcode, change, outlet.outlet_id)
+				else:
+					db.session.delete(outlet)
 
 before_models_committed.connect(outlet_db_sync, sender=app)
+
+

@@ -32,10 +32,43 @@ import codecs, time, datetime
 # 	db.session.add(new_transaction)
 # 	db.session.commit()
 
-file_object=codecs.open("values_in_outlet.txt", 'r', 'utf-8')
+# file_object=codecs.open("values_in_outlet1.txt", 'r', 'utf-8')
+# for line in file_object:
+# 	barcode=line
+# 	outlet_id=1
+# 	new_retaillink=database.RetailLink(barcode=barcode, outlet_id=outlet_id)
+# 	database.db.session.add(new_retaillink)
+# 	database.db.session.commit()
+
+# file_object=codecs.open("values_in_outlet2.txt", 'r', 'utf-8')
+# for line in file_object:
+# 	barcode=line
+# 	outlet_id=2
+# 	new_retaillink=database.RetailLink(barcode=barcode, outlet_id=outlet_id)
+# 	database.db.session.add(new_retaillink)
+# 	database.db.session.commit()
+
+# file_object=codecs.open("values_in_outlet3.txt", 'r', 'utf-8')
+# for line in file_object:
+# 	barcode=line
+# 	outlet_id=3
+# 	new_retaillink=database.RetailLink(barcode=barcode, outlet_id=outlet_id)
+# 	database.db.session.add(new_retaillink)
+# 	database.db.session.commit()
+
+# file_object=codecs.open("values_in_outlet4.txt", 'r', 'utf-8')
+# for line in file_object:
+# 	barcode=line
+# 	outlet_id=4
+# 	new_retaillink=database.RetailLink(barcode=barcode, outlet_id=outlet_id)
+# 	database.db.session.add(new_retaillink)
+# 	database.db.session.commit()
+
+file_object=codecs.open("values_in_outlet5.txt", 'r', 'utf-8')
+count = 1
 for line in file_object:
 	barcode=line
-	outlet_id=1
+	outlet_id=5
 	new_retaillink=database.RetailLink(barcode=barcode, outlet_id=outlet_id)
 	database.db.session.add(new_retaillink)
 	database.db.session.commit()

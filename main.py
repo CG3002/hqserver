@@ -19,4 +19,4 @@ if __name__ == '__main__':
     # Create admin
     # Start app
     app.debug = True
-    app.run('127.0.0.1', 5000)
+    app.run('0.0.0.0', 8000)
