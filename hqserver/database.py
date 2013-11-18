@@ -6,8 +6,9 @@ from flask.ext.sqlalchemy import SQLAlchemy, before_models_committed
 import time
 import os
 import views
+from werkzeug.security import generate_password_hash, check_password_hash
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/test1.db'
 # app.config['SQLALCHEMY_ECHO'] = True
 app.secret_key = os.urandom(24)
 db = SQLAlchemy(app)
@@ -40,6 +41,8 @@ class Product(db.Model):
 		'product_MRP' : self.product_MRP,
 		'product_bundle_unit' : self.product_bundle_unit
 		}
+
+
 
 class Outlet(db.Model):
 	__tablename__='Outlets'
@@ -97,12 +100,45 @@ class TransactionSync(db.Model):
 
 class User(db.Model):
 	__tablename__='Trolley Users'
-	email=db.Column(db.String(120), primary_key=True)
-	password=db.Column(db.String(160), unique=True)
+	user_id=db.Column(db.Integer, primary_key=True, autoincrement=True)
+	email=db.Column(db.String(120), unique=True)
+	pw_hash=db.Column(db.String(160), unique=True)
 	name=db.Column(db.String(120))
-	
+	is_admin=db.Column(db.Boolean)
 
+	def __init__(self, **kwargs):
+		self.email=kwargs.get('email')
+		if kwargs.get('password') is not None:
+			self.set_password(kwargs.get('password'))
+		self.name=kwargs.get('name', "")
+		self.is_admin=kwargs.get('is_admin', False)
 
+	def set_password(self, password):
+		print "Here"
+		print password
+		print generate_password_hash(password)
+		self.pw_hash = generate_password_hash(password)
+
+	def check_password(self, password):
+		return check_password_hash(self.pw_hash, password)
+
+	def __repr__(self):
+		return '<Email: %r' % (self.email)		
+
+	def is_authenticated(self):
+		return True
+
+	def is_active(self):
+		return True
+
+	def is_anonymous(self):
+		return False
+
+	def get_id(self):
+		return unicode(self.user_id)
+
+# class Trolley(db.Model):
+# 	__tablename__=
 
 def outlet_db_sync(sender, changes):
 	for model, change in changes:

@@ -1,18 +1,54 @@
 from hqserver import app
 import requests
-from flask import request, make_response, jsonify, json
+from flask import request, make_response, jsonify, json, url_for, redirect, render_template
 import simplejson
 import database
 import csv
+from flask.ext import admin, login
+from flask.ext.admin import helpers
+import forms
+
 @app.route('/')
 def index():
-	return '<a href="/admin/">Click me to get to Admin!</a>'
+	return render_template('index.html', user=login.current_user)
 
+@app.route('/login/', methods=['GET', 'POST'])
+def login_view():
+	form = forms.LoginForm(request.form)
+	if form.validate_on_submit():
+		print "User password validated"
+		user = form.user
+		login.login_user(user)
+		return redirect(url_for('index'))
+
+	return render_template('form.html', form=form)
+
+@app.route('/register/', methods=['GET', 'POST'])
+def register_view():
+	form = forms.RegistrationForm(request.form)
+	if form.validate_on_submit():
+		print "User Validate"
+		user = database.User(email=form.email.data, password=form.password.data, name=form.name.data)
+
+		database.db.session.add(user)
+		database.db.session.commit()
+
+		login.login_user(user)
+		return redirect(url_for('index'))
+
+	return render_template('form.html', form=form)
+
+@app.route('/logout/')
+def logout_view():
+	login.logout_user()
+	return redirect(url_for('index'))
+
+ 
 def outlet_sync(product_barcode, db_action, outlet_id):
 	print database.Outlet.query.get(outlet_id).outlet_server_ip
 	payload = {}
 	if db_action!="delete":
-		product_obj=database.Product.query.get(product_barcode)
+		produt_obj=database.Product.query.get(product_barcode)
 		data = simplejson.dumps(product_obj.serialize(), use_decimal=True)
 	else:
 		payload['barcode'] = product_barcode
