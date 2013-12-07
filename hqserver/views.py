@@ -186,6 +186,14 @@ def return_trolley():
 		print payload
 	return make_response(json.dumps(payload), 200, {'content-type': 'application/json'})
 
+@app.route('/product/name/', methods=['POST'])
+def return_product_name():
+	data=request.get_json()
+	barcode=data.get('barcode')
+	product=database.Product.query.get(barcode)
+	if product is not None:
+		return make_response(jsonify({'product_name': product.product_name}), 200)
+	return make_response(jsonify({'product_name': "Product doesn't Exist"}), 200)
 
 def outlet_sync(product_barcode, db_action, outlet_id):
 	print database.Outlet.query.get(outlet_id).outlet_server_ip
