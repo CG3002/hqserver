@@ -171,7 +171,7 @@ def delete_trolley(trolley_id=None):
 		database.db.session.commit()
 		return make_response(jsonify({'status': "Trolley deleted"}), 200)
 
-@app.route('/trolley/get/', methods=['POST'])
+@app.route('/get/trolley/', methods=['POST'])
 def return_trolley():
 	data=request.get_json()
 	trolley_id=data.get('trolley')
