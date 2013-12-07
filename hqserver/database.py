@@ -7,6 +7,7 @@ import time
 import os
 import views
 from werkzeug.security import generate_password_hash, check_password_hash
+from random import randint
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/test1.db'
 # app.config['SQLALCHEMY_ECHO'] = True
@@ -100,6 +101,7 @@ class TransactionSync(db.Model):
 
 class User(db.Model):
 	__tablename__='Trolley Users'
+	__table_args__= {'sqlite_autoincrement': True}
 	user_id=db.Column(db.Integer, primary_key=True, autoincrement=True)
 	email=db.Column(db.String(120), unique=True)
 	pw_hash=db.Column(db.String(160), unique=True)
@@ -123,7 +125,7 @@ class User(db.Model):
 		return check_password_hash(self.pw_hash, password)
 
 	def __repr__(self):
-		return '<Email: %r' % (self.email)		
+		return '<Email: %r>' % (self.email)		
 
 	def is_authenticated(self):
 		return True
@@ -137,8 +139,53 @@ class User(db.Model):
 	def get_id(self):
 		return unicode(self.user_id)
 
-# class Trolley(db.Model):
-# 	__tablename__=
+class Trolley(db.Model):
+	__tablename__='Trolley Details'
+	__table_args__={'sqlite_autoincrement' : True}
+	trolley_id=db.Column(db.Integer, db.ForeignKey('User Trolley Link.trolley_id', ondelete='SET NULL'), primary_key=True)
+	barcode=db.Column(db.Integer, db.ForeignKey('Products.barcode', ondelete='SET NULL'), primary_key=True)
+	quantity=db.Column(db.Integer)
+	product=db.relationship('Product', backref='trolleys')
+
+	def __init__(self, **kwargs):
+		self.barcode=kwargs.get('barcode')
+		self.quantity=kwargs.get('quantity')
+		self.trolley_id=kwargs.get('trolley_id')
+		
+
+	@classmethod
+	def create_trolley(cls, **kwargs):
+		print "Here"
+		trolley=kwargs.get('trolley')
+		trolley_id=kwargs.get('trolley_id')
+		for item in trolley:
+			print item['barcode'], item['quantity']
+			if item['barcode'] == "" or item['barcode'] is None:
+				return False
+			new_trolley=cls(barcode=item['barcode'], quantity=item['quantity'], trolley_id=trolley_id)
+			db.session.add(new_trolley)
+			db.session.commit()
+
+class TrolleyLink(db.Model):
+	__tablename__='User Trolley Link'
+	trolley_id=db.Column(db.Integer, primary_key=True)
+	user_id=db.Column(db.Integer, db.ForeignKey('Trolley Users.user_id', ondelete='SET NULL'))
+
+	def __init__(self, **kwargs):
+		self.user_id=kwargs.get('user_id')
+		self.trolley_id=kwargs.get('trolley_id', None)
+		if self.trolley_id is None:
+			done=0
+			while(done==0):
+				trolley_id=randint(100000, 999999)
+				existing_trolley=TrolleyLink.query.get(trolley_id)
+				print existing_trolley
+				if existing_trolley is None:
+					self.trolley_id=trolley_id
+					done=1
+				else:
+					done=0
+
 
 def outlet_db_sync(sender, changes):
 	for model, change in changes:

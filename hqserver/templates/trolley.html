@@ -1,0 +1,173 @@
+<html>
+	<head>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+		<script type="text/javascript" src="/static/js/parsley.js"></script>
+		<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+  		<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+  		<style>
+			.ui-autocomplete-category {
+			font-weight: bold;
+			padding: .2em .4em;
+			margin: .8em 0 .2em;
+			line-height: 1.5;
+			}
+		</style>
+		<script>
+			$.widget( "custom.catcomplete", $.ui.autocomplete, {
+			_renderMenu: function( ul, items ) {
+			  var that = this,
+			    currentCategory = "";
+			  $.each( items, function( index, item ) {
+			    if ( item.category != currentCategory ) {
+			      ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
+			      currentCategory = item.category;
+			    }
+			    that._renderItemData( ul, item );
+			  });
+			}
+			});
+		</script>
+	</head>
+	<body>
+		{% if trolley_items %}
+		<form id="trolley-form">
+					<input type="hidden" name="trolley_id" value="{{ trolley_id }}"/>
+					<div id="container">
+						{% for item in trolley_items %}
+						<div id="fields{{ loop.index0 }}">
+							<input type="hidden" id="barcode" name="barcode" value="{{ item.barcode }}" parsley-minlength="8"/>
+							<input type="text" id="search" name="name" value="{{ item.product_name }}"  required/>
+							<input type="text" id="quantity" name="quantity" value="{{ item.quantity }}"parsley-type="number"/>
+							<input type="button" value="+" id="add" />
+							<input type="button" value="-" id="remove" /> 
+						</div>
+						{% endfor %}
+					</div>
+					<input type="submit" value="Edit Trolley" />
+		</form>
+		{% else %}
+		<form id="trolley-form">
+					<div id="container">
+						<div id="fields0">
+							<input type="hidden" id="barcode" name="barcode" value="" parsley-minlength="8"/>
+							<input type="text" id="search" name="name" required/>
+							<input type="text" id="quantity" name="quantity" parsley-type="number" />
+							<input type="button" value="+" id="add" />
+							<input type="button" value="-" id="remove" /> 
+						</div>
+					</div>
+					<input type="submit" value="Add Trolley" />
+		</form>
+		{% endif %}
+		<a href="{{ url_for('index') }}">Go Home</a>
+		<div id="dialog-success" title="Message">
+  			<p>Trolley Created!</p>
+  			<a href="{{url_for('index')}}">Go Home</a>
+		</div>
+		<script type="text/javascript">
+			$.fn.serializeObject = function()
+				{
+				    var o = {};
+				    var a = this.serializeArray();
+				    $.each(a, function() {
+				        if (o[this.name] !== undefined) {
+				            if (!o[this.name].push) {
+				                o[this.name] = [o[this.name]];
+				            }
+				            o[this.name].push(this.value || '');
+				        } else {
+				            o[this.name] = this.value || '';
+				        }
+				    });
+				    return o;
+				};
+		</script>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				$("#dialog-success").dialog({
+					autoOpen: false,
+			        modal: true,
+			     });
+				$(document).on('click', '#add', function() {
+					var iter = $("#container div").length + 1;
+					console.log(iter);
+					var newfield = $("<div id=\"fields"+iter+"\"/>");
+					var barcodeField = $("<input type=\"hidden\" id=\"barcode\" name=\"barcode\" />");
+					var searchField = $("<input type=\"text\" id=\"search\" name=\"name\" required />");
+					var quantityField = $("<input type=\"text\" id=\"quantity\" name=\"quantity\" parsley-type=\"number\" />");
+					var addButton = $("<input type=\"button\" value=\"+\" id=\"add\" />");
+					var removeButton = $("<input type=\"button\" value=\"-\" id=\"remove\" />");
+					newfield.append(barcodeField);
+					newfield.append(searchField);
+					newfield.append(quantityField);
+					newfield.append(addButton);
+					newfield.append(removeButton);
+					$("#container").append(newfield);
+					searchField.catcomplete({
+						source: "{{ url_for('autocomplete_search', outlet_id=outlet_id) }}",
+						minLength: 3,
+						select: function( event, ui ){
+							console.log($(this).parent());
+							if(ui.item) {
+								insert(ui.item.id, this)
+							}
+						}
+					});
+					barcodeField.change( function() {
+						var barcode=$(this).val();
+						$("#trolley-form").parsley('destroy');
+						$(this).parent().children("#quantity").attr('parsley-remote', '/validate/{{ outlet_id }}/quantity/'+barcode+'/');
+						$("#trolley-form").parsley();
+					});
+				});
+				$(document).on('click', '#remove', function() {
+					var iter = $("#container div").length
+					if (iter > 1) {
+						$(this).parent().remove();
+					}
+				});
+				$(document).on('submit', '#trolley-form', function(event) {
+ 					event.preventDefault();
+ 					// $("#trolley-form").parsley('validate');
+					var datastring = $(this).serializeObject();
+					if ($("#trolley-form").parsley('isValid')) {
+						$.ajax({
+			            type: "POST",
+			            contentType: "application/json",
+			            url: "{{ url_for('trolley_data') }}",
+			            data: JSON.stringify(datastring),
+			            dataType: "json",
+			            success: function(data) {
+			            	$("#dialog-success").dialog("open");
+			                //var obj = jQuery.parseJSON(data); if the dataType is not specified as json uncomment this
+			                // do what ever you want with the server response
+			            },
+			            error: function(){
+			                  alert('error handing here');
+			            }
+			        	});
+					}
+				});
+				$("#barcode").change( function() {
+					var barcode=$(this).val();
+					$("#trolley-form").parsley('destroy');
+					$(this).parent().children("#quantity").attr('parsley-remote', '/validate/{{ outlet_id }}/quantity/'+barcode+'/');
+					$("#trolley-form").parsley();
+				});
+				function insert(barcode, elem){
+					$(elem).parent().children("#barcode").val(barcode).trigger('change');
+				}
+				$("#search").catcomplete({
+					source: "{{ url_for('autocomplete_search', outlet_id=outlet_id) }}",
+					minLength: 3,
+					select: function( event, ui ){
+						console.log($(this).parent());
+						if(ui.item) {
+							insert(ui.item.id, this)
+						}
+					}
+				});
+			});
+		</script>
+	</body>
+</html>
