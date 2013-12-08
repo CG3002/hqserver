@@ -80,7 +80,7 @@ class RetailLink(db.Model):
 		self.barcode=kwargs.get('barcode')
 		self.outlet_id=kwargs.get('outlet_id')
 		self.product_max_stock=kwargs.get('max_stock', 500)
-		self.product_min_stock=kwargs.get('min_stock', 40)
+		self.product_min_stock=kwargs.get('min_stock', 50)
 
 	def __repr__(self):
 		return '<RetailLink Barcode: %r, Outlet_ID: %r>' % (self.barcode, self.outlet_id)
@@ -94,6 +94,8 @@ class TransactionSync(db.Model):
 	total_revenue=db.Column(db.Float)
 	product=db.relationship('Product',
 		backref=db.backref('transactionsAssociated', lazy='dynamic'))
+	outlet=db.relationship('Outlet',
+        backref=db.backref('transactionsOutlets', lazy='dynamic'))
 
 	def __init__(self, **kwargs):
 		self.barcode=kwargs.get('barcode')
