@@ -3,6 +3,8 @@ from hqserver.database import db, Product, RetailLink, Outlet, TransactionSync, 
 from flask.ext.admin import Admin
 from hqserver.model_views import ProductAdmin, OutletAdmin, RetailLinkAdmin, TransactionHistory
 from flask.ext import login
+from flask.ext.admin import BaseView, expose
+from hqserver.views import login_view
 
 admin = Admin(app, name="HQ Server")
 

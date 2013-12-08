@@ -105,7 +105,8 @@
 		                // do what ever you want with the server response
 		            },
 		            error: function(){
-		                  alert('error handing here');
+		            	$("#price").remove()
+		            	$("#warning").remove()
 		            }
 		        	});
 			}

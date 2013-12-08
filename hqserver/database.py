@@ -136,6 +136,9 @@ class User(db.Model):
 	def is_active(self):
 		return True
 
+	def is_administrator(self):
+		return self.is_admin
+
 	def is_anonymous(self):
 		return False
 
