@@ -97,10 +97,17 @@
 		            success: function(data) {
 		            	$("#price").remove();
 		            	$("#warning").remove();
-		            	var priceField="<h3><div id=\"price\">Total Price: "+data['price'].toFixed(2)+"</div></h3>";
-		            	var warningField="<h5><div id=\"warning\">Disclaimer: Price shown here is for estimating only. Actual price may vary.</div></h5>"
-		            	$("#trolley-form").append(priceField);
-		            	$("#trolley-form").append(warningField);
+		            	if (data['price'] >= 0) {
+		            		var priceField="<h3><div id=\"price\">Total Price: "+data['price'].toFixed(2)+"</div></h3>";
+		            		var warningField="<h5><div id=\"warning\">Disclaimer: Price shown here is for estimating only. Actual price may vary.</div></h5>"
+		            		$("#trolley-form").append(priceField);
+		            		$("#trolley-form").append(warningField);
+		            	}
+		            	else {
+		            		var warningField="<h5><div id=\"warning\">You have entered invalid values for barcode/quantity</div></h5>"
+		            		$("#trolley-form").append(warningField);
+
+		            	}
 		                //var obj = jQuery.parseJSON(data); if the dataType is not specified as json uncomment this
 		                // do what ever you want with the server response
 		            },
