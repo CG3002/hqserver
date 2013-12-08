@@ -36,7 +36,7 @@
 					<div id="fields{{ loop.index0 }}">
 						<input type="hidden" id="barcode" class="form-control" name="barcode" value="{{ item.barcode }}" parsley-minlength="8"/>
 						<input type="text" id="search" class="form-control" name="name" value="{{ item.product_name }}" required/>
-						<input type="text" id="quantity" class="form-control" name="quantity" value="{{ item.quantity }}"parsley-type="number" required/>
+						<input type="text" id="quantity" class="form-control" name="quantity" value="{{ item.quantity }}"parsley-type="number" required parsley-min="1"/>
 						<input type="button" class="btn btn-default" value="+" id="add" />
 						<input type="button" class="btn btn-default"value="-" id="remove" /> 
 					</div>
@@ -51,7 +51,7 @@
 					<div id="fields0">
 						<input type="hidden" id="barcode" class="form-control" name="barcode" value="" parsley-minlength="8"/>
 						<input type="text" id="search" class="form-control" name="name" required/>
-						<input type="text" id="quantity" class="form-control" name="quantity" parsley-type="number" required/>
+						<input type="text" id="quantity" class="form-control" name="quantity" parsley-type="number" required parsley-min="1"/>
 						<input type="button" class="btn btn-default" value="+" id="add" />
 						<input type="button" class="btn btn-default" value="-" id="remove" /> 
 					</div>
@@ -130,7 +130,7 @@
 				var newfield = $("<div id=\"fields"+iter+"\"></div>");
 				var barcodeField = $("<input type=\"hidden\" id=\"barcode\" class=\"form-control\" name=\"barcode\" />");
 				var searchField = $("<input type=\"text\" id=\"search\" class=\"form-control\" name=\"name\" required />");
-				var quantityField = $("<input type=\"text\" id=\"quantity\" class=\"form-control\" name=\"quantity\" parsley-type=\"number\" required/>");
+				var quantityField = $("<input type=\"text\" id=\"quantity\" class=\"form-control\" name=\"quantity\" parsley-type=\"number\" required/ parsley-min=\"1\">");
 				var addButton = $("<input type=\"button\" class=\"btn btn-default\" value=\"+\" id=\"add\" required/>");
 				var removeButton = $("<input type=\"button\" class=\"btn btn-default\" value=\"-\" id=\"remove\" />");
 				newfield.append(barcodeField);
