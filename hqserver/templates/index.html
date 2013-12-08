@@ -1,20 +1,6 @@
-<html>
-	<head>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-		<script type="text/javascript" src="/static/js/parsley.js"></script>
-	</head>
-	<body>
-		<div>
-			{% if user and user.is_authenticated() %}
-				Hello {{ user.name }}! <a href = "{{ url_for('logout_view') }}">Logout</a><br />
-				{% if outlets %}
-					{% for outlet in outlets %}
-						<a href="{{ url_for('outlet_view', outlet_id=outlet.outlet_id) }}">{{ outlet.outlet_name }}, {{ outlet.location }}</a><br />
-					{% endfor %}
-				{% endif %}
-			{% else %}
-				<a href="{{ url_for('login_view') }}">Login</a>&nbsp;<a href="{{ url_for('register_view') }}">Register</a>
-			{% endif %}
-		</div>
-	</body>
-</html>
+{% extends "base.html" %}
+{% block container %}
+	<div class="col-md-5 col-md-offset-4">
+		<h1>H.A.C.K.E.R Store</h1>
+	</div> 
+{% endblock %}

@@ -186,6 +186,23 @@ def return_trolley():
 		print payload
 	return make_response(json.dumps(payload), 200, {'content-type': 'application/json'})
 
+@app.route('/get/price/', methods=['POST'])
+def return_trolley_price():
+	outlet_id=request.get_json().get('outlet_id')
+	trolley_id=request.get_json().get('trolley_id')
+	outlet = database.Outlet.query.get(outlet_id)
+	trolleys=database.Trolley.query.filter_by(trolley_id=trolley_id).all()
+	payload = []
+	if trolleys is None:
+		error_payload={'error': True}
+		return make_response(json.dumps(error_payload), 200, {'content-type': 'application/json'})
+	outlet_ip=str(outlet.outlet_server_ip)+"get/price/"
+	for trolley in trolleys:
+		payload.append({'barcode': trolley.barcode, 'quantity': trolley.quantity})
+	headers = {'content-type' : 'application/json'}
+	resp=requests.post(outlet_ip, data=json.dumps(payload), headers=headers)
+	return make_response(jsonify(resp.json()), 200)	
+
 @app.route('/product/name/', methods=['POST'])
 def return_product_name():
 	data=request.get_json()
@@ -215,7 +232,7 @@ def outlet_sync(product_barcode, db_action, outlet_id):
 		resp=requests.delete(url, data=data, headers=headers)
 	print resp.text
 
-@app.route('/restock', methods=['POST',])
+@app.route('/restock/', methods=['POST',])
 def retail_server_restock():
 	if request.method=="POST":
 		return make_response(jsonify({'error' : 'False'}), 200)

@@ -8,6 +8,7 @@ import os
 import views
 from werkzeug.security import generate_password_hash, check_password_hash
 from random import randint
+import datetime
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/test1.db'
 # app.config['SQLALCHEMY_ECHO'] = True
@@ -91,6 +92,8 @@ class TransactionSync(db.Model):
 	timestamp=db.Column(db.Integer, primary_key=True)
 	quantity_sold=db.Column(db.Integer)
 	total_revenue=db.Column(db.Float)
+	product=db.relationship('Product',
+		backref=db.backref('transactionsAssociated', lazy='dynamic'))
 
 	def __init__(self, **kwargs):
 		self.barcode=kwargs.get('barcode')
@@ -170,10 +173,12 @@ class TrolleyLink(db.Model):
 	__tablename__='User Trolley Link'
 	trolley_id=db.Column(db.Integer, primary_key=True)
 	user_id=db.Column(db.Integer, db.ForeignKey('Trolley Users.user_id', ondelete='SET NULL'))
+	date_created=db.Column(db.DateTime)
 
 	def __init__(self, **kwargs):
 		self.user_id=kwargs.get('user_id')
 		self.trolley_id=kwargs.get('trolley_id', None)
+		self.date_created=datetime.datetime.now()
 		if self.trolley_id is None:
 			done=0
 			while(done==0):

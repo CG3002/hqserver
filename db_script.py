@@ -3,7 +3,7 @@ Python script for inserting Product objects from Inventory files
 '''
 from hqserver import database
 import codecs, time, datetime
-# file_object=codecs.open("hqserver/Inventory_5000.txt", 'r', 'utf-8')
+file_object=codecs.open("hqserver/Inventory_5000.txt", 'r', 'utf-8')
 # for line in file_object:
 # 	line_split=line.split(':')
 # 	product_name=line_split[0]

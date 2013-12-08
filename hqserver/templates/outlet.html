@@ -1,46 +1,44 @@
-<html>
-	<head>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-		<script type="text/javascript" src="/static/js/parsley.js"></script>
-		<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
-  		<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-	</head>
-	<body>
-		<div>
-			{% if user and user.is_authenticated() %}
-				Hello {{ user.name }}! <a href = "{{ url_for('logout_view') }}">Logout</a><br />
-				{% if trolleys %}
-					{% for trolley in trolleys %}
-						<a href="{{ url_for('trolley_view', trolley_id=trolley.trolley_id, outlet_id=outlet_id) }}">{{ trolley.trolley_id }}</a>
-						<button id="delete" onclick="delete_trolley({{ trolley.trolley_id }})">Delete Trolley</button><br />
-					{% endfor %}
-				{% endif %}
-					<a href="{{ url_for('trolley_view', outlet_id=outlet_id) }}">New Trolley</a>
-			{% else %}
-				<a href="{{ url_for('login_view') }}">Login</a>&nbsp;<a href="{{ url_for('register_view') }}">Register</a>
-			{% endif %}
-		</div>
-		<div id="dialog-delete">
-		</div>
-		<script type="text/javascript">
-			function delete_trolley(trolley_id){
-				console.log("Ready");
-				$.ajax({
-		            type: "POST",
-		            contentType: "application/json",
-		            url: "/trolley/"+trolley_id+"/delete/",
-		            dataType: "json",
-		            success: function(data) {
-		            	$("#dialog-success").dialog("open");
-		            	window.location.reload(true);
-		                //var obj = jQuery.parseJSON(data); if the dataType is not specified as json uncomment this
-		                // do what ever you want with the server response
-		            },
-		            error: function(){
-		                  alert('error handing here');
-		            }
-		        });
-		  	} 
-		</script>
-	</body>
-</html>
+{% extends "base.html" %}
+{% block container %}
+	{% if trolleys %}
+	<table class="table table-bordered table-striped"
+		<tr>
+			<th>Trolley ID</th>
+			<th>Date Created</th>
+			<th></th>
+		</tr>
+		{% for trolley in trolleys %}
+		<tr>
+			<td><a href="{{ url_for('trolley_view', trolley_id=trolley.trolley_id, outlet_id=outlet_id) }}">{{ trolley.trolley_id }}</a></td>
+			<td><div>{{ trolley.date_created.date() }}</div></td>
+			<td><button id="delete" onclick="delete_trolley({{ trolley.trolley_id }})">Delete Trolley</button><br /></td>
+			
+		{% endfor %}
+	</table>
+	{% endif %}
+		<a href="{{ url_for('trolley_view', outlet_id=outlet_id) }}">New Trolley</a>
+	<div id="dialog-delete">
+	</div>
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+		function delete_trolley(trolley_id){
+			console.log("Ready");
+			$.ajax({
+	            type: "POST",
+	            contentType: "application/json",
+	            url: "/trolley/"+trolley_id+"/delete/",
+	            dataType: "json",
+	            success: function(data) {
+	            	$("#dialog-success").dialog("open");
+	            	window.location.reload(true);
+	                //var obj = jQuery.parseJSON(data); if the dataType is not specified as json uncomment this
+	                // do what ever you want with the server response
+	            },
+	            error: function(){
+	                  alert('error handing here');
+	            }
+	        });
+	  	} 
+</script>
+{% endblock %}

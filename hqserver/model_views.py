@@ -27,6 +27,6 @@ class TransactionHistory(sqla.ModelView):
 	column_display_pk = True
 	can_edit = True
 	column_filters = ('barcode', 'outlet_id', 'timestamp')
-
+	
 
 
